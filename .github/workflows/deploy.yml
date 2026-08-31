@@ -1,9 +1,5 @@
 name: Deploy CNCjs
 
-# No image is built here: cncjs publishes the official image to Docker Hub and
-# docker-stack.yml pins the version. A pull request only validates the stack
-# file, a push to main deploys it over ssh.
-
 on:
   pull_request:
   push:
