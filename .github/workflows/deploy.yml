@@ -1,0 +1,41 @@
+name: Deploy CNCjs
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+env:
+  STACK_NAME: cncjs
+  HOST: ${{ vars.HOST }}
+  USERNAME: ${{ vars.USERNAME }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deploy repository
+        uses: actions/checkout@v6
+
+      - name: Render the stack file
+        run: docker stack config -c docker-stack.yml
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout deploy repository
+        uses: actions/checkout@v6
+
+      - name: Docker Stack Deploy
+        uses: cssnr/stack-deploy-action@v1
+        with:
+          name: ${{ env.STACK_NAME }}
+          file: docker-stack.yml
+          host: ${{ env.HOST }}
+          user: ${{ env.USERNAME }}
+          ssh_key: ${{ secrets.ROOT_SSH_PRIVATE_KEY }}
