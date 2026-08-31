@@ -2,15 +2,7 @@ version: "3.8"
 
 services:
   app:
-    # The image tag is hardcoded on purpose. cncjs publishes every release to
-    # Docker Hub from its own `ci-docker-hub` workflow as `cncjs/cncjs:v<version>`
-    # (plus `latest`). Pinning the version here makes a deploy reproducible and
-    # turns an upgrade into a reviewable one line change in this file.
     image: cncjs/cncjs:v1.11.3
-    # The image entrypoint is the cncjs server CLI, so these are its options.
-    # ~/.cncrc is the only state cncjs keeps (secret, users, macros, settings),
-    # and $HOME in the image is /root, which already holds the node runtime and
-    # cannot be a volume, so the config file is moved onto the data volume.
     command:
       - --host
       - 0.0.0.0
@@ -21,13 +13,10 @@ services:
     volumes:
       - cncjs-data:/var/lib/cncjs
     networks:
-      # Only caddy can reach the app, the app publishes no port of its own.
       - infra_reverse-proxy
     deploy:
       replicas: 1
       update_config:
-        # stop-first, not start-first: two instances would fight over the
-        # .cncrc file and, once a controller is wired up, over the serial port.
         order: stop-first
       restart_policy:
         condition: any
@@ -36,12 +25,7 @@ services:
         limits:
           memory: 512M
 
-    # --- Serial controller (optional) -------------------------------------
-    # Swarm mode has no `--device` and no `privileged`, so a USB serial adapter
-    # cannot be handed to a service the way `docker run --device` does it. When
-    # cncjs has to drive a machine over USB, label the swarm node that is
-    # physically wired to it (`docker node update --label-add cncjs=true <node>`)
-    # and uncomment both blocks below. See README "Talking to a controller".
+    # Serial controller, see README "Talking to a controller".
     #
     # volumes:
     #   - cncjs-data:/var/lib/cncjs
